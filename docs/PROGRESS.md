@@ -8,6 +8,7 @@ The starter code is committed to GitHub. CI checks (including Docker fault injec
 |---|---|---|
 | 0 | Repository, local run and smoke validation | GitHub CI passed; clean local verification pending |
 | 1 | Three reproducible incidents and ground truth | GitHub integration suite passed; local verification pending |
+| 1.5 | Structured JSON logs, metrics, correlation, 2 harder faults | In development; CI validation pending |
 | 2 | Typed, bounded evidence tools | Not started |
 | 3 | Model-only diagnostic baseline | Not started |
 | 4 | Tool-calling investigator loop | Not started |
@@ -26,7 +27,7 @@ The starter code is committed to GitHub. CI checks (including Docker fault injec
 - [x] Remote CI build
 - [x] Remote CI Compose validation
 - [x] Remote CI fault injection suite
-- [ ] Generate and commit package-lock.json for reproducible npm ci
+- [ ] Generate and commit package-lock.json for reproducible npm ci (CP1.5)
 - [ ] Local smoke test on a clean environment
 
 Do not claim end-to-end validation until these checks are observed passing.

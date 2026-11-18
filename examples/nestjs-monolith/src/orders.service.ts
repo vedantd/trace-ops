@@ -1,6 +1,5 @@
 import {
   GatewayTimeoutException,
-  HttpException,
   Injectable,
   NotFoundException,
   ServiceUnavailableException,

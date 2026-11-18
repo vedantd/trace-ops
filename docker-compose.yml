@@ -18,17 +18,31 @@ services:
       timeout: 3s
       retries: 15
 
+  mock-provider:
+    image: node:22-alpine
+    command: ['node', '/app/server.js']
+    volumes:
+      - ./examples/mock-provider/server.js:/app/server.js:ro
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://localhost:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
   api:
     build:
       context: ./examples/nestjs-monolith
     depends_on:
       postgres:
         condition: service_healthy
+      mock-provider:
+        condition: service_healthy
     environment:
       NODE_ENV: development
       PORT: 3000
       DATABASE_URL: postgresql://traceops:traceops_local_only@postgres:5432/traceops
       FAULT_MODE: ${FAULT_MODE:-none}
+      MOCK_PROVIDER_URL: http://mock-provider:3001
     ports:
       - '127.0.0.1:3000:3000'
     restart: 'no'
