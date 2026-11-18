@@ -71,6 +71,50 @@
         "Pool occupancy/queue metrics available on /metrics"
       ],
       "recovery": "make reset"
+    },
+    {
+      "id": "cp175-provider-flaky",
+      "environment": "local-compose",
+      "fault_injection": "make fault-provider-flaky",
+      "symptom": "Order verification returns 200 but latency grows; provider retries and attempts include failures",
+      "root_cause": "Mock provider returns 503 to each first attempt; API retries after 100ms and succeeds on its second attempt",
+      "component": "mock-provider HTTP dependency",
+      "expected_evidence": [
+        "API client success with healthy PostgreSQL readiness",
+        "Correlated provider 503 and 200 across attempts",
+        "Nonzero outbound failure/retry counters without client 5xx"
+      ],
+      "recovery": "make reset"
+    },
+    {
+      "id": "cp175-provider-outage",
+      "environment": "local-compose",
+      "fault_injection": "make fault-provider-outage",
+      "symptom": "Order verification returns 502 while API database readiness is 200",
+      "root_cause": "Provider returns 503 on both bounded attempts, causing verification to fail",
+      "component": "mock-provider HTTP dependency",
+      "expected_evidence": [
+        "502 on /orders/:id/verify while /health/ready is 200",
+        "Two failed attempts with the same request ID across provider and API",
+        "Outbound failure counters and final upstream_request_failed"
+      ],
+      "recovery": "make reset"
+    },
+    {
+      "id": "cp18-progressive-provider-degradation",
+      "environment": "local-compose",
+      "fault_injection": "make replay",
+      "symptom": "Verification transitions from low latency to higher latency, retry-masked dependency errors, client-facing 502 failures, and recovery",
+      "root_cause": "One local mock provider intentionally changes across five time windows without restarting the API. A simulated deployment marker is correlated but not causal.",
+      "component": "mock-provider HTTP dependency",
+      "expected_evidence": [
+        "Client HTTP 200 persists while the provider becomes slower and first-attempt 503 retries are masked",
+        "Attempt-level 503s and retries increase before user-facing 502s",
+        "During provider outage, dependency 503s and client 502s correlate through request IDs",
+        "Following recovery, response statuses and latency return to baseline patterns",
+        "A deployment marker exists but does not explain the provider-side response failures"
+      ],
+      "recovery": "Timed replay restores healthy mode automatically; make reset to clean all local state"
     }
   ]
 }

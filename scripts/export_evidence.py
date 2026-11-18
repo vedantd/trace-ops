@@ -10,15 +10,20 @@ import subprocess
 import urllib.request
 
 ALLOW_EVENTS = {
+    "service_started",
     "request_completed",
     "database_query_failed",
     "postgres_pool_error",
     "upstream_request_failed",
     "application_exception",
+    "dependency_request_completed",
+    "upstream_retry_scheduled",
+    "provider_request_completed",
 }
 ALLOW_FIELDS = {
     "timestamp", "service", "level", "event", "request_id", "method",
     "route", "http_status", "duration_ms", "error_code", "dependency",
+    "operation", "attempt", "backoff_ms",
 }
 SCENARIOS = {
     "cp1-db-unavailable",
@@ -26,6 +31,8 @@ SCENARIOS = {
     "cp1-app-exception",
     "cp15-upstream-timeout",
     "cp15-db-pool-exhaustion",
+    "cp175-provider-flaky",
+    "cp175-provider-outage",
 }
 
 
@@ -41,7 +48,7 @@ def parse_safe_events(raw: str) -> list[dict]:
             continue
         if not isinstance(record, dict) or record.get("event") not in ALLOW_EVENTS:
             continue
-        if record.get("service") != "orders-api":
+        if record.get("service") not in {"orders-api", "mock-provider"}:
             continue
         observation = {
             key: value for key, value in record.items()
@@ -53,6 +60,39 @@ def parse_safe_events(raw: str) -> list[dict]:
     return observations
 
 
+
+def parsed_timestamp(event: dict) -> dt.datetime | None:
+    """Normalize ISO timestamps before comparing provider and API events."""
+    raw = event.get("timestamp")
+    if not isinstance(raw, str):
+        return None
+    try:
+        stamp = dt.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        return stamp if stamp.tzinfo is not None else None
+    except ValueError:
+        return None
+
+
+def select_current_events(all_events: list[dict]) -> list[dict]:
+    """Exclude stale provider events, even when request IDs were reused."""
+    api_events = [event for event in all_events if event.get("service") == "orders-api"]
+    api_timestamps = [stamp for event in api_events
+                      if (stamp := parsed_timestamp(event)) is not None]
+    if not api_timestamps:
+        return api_events
+    window_start = min(api_timestamps)
+    current_ids = {event.get("request_id") for event in api_events if event.get("request_id")}
+    provider_events = [
+        event for event in all_events
+        if event.get("service") == "mock-provider"
+        and event.get("request_id") in current_ids
+        and (stamp := parsed_timestamp(event)) is not None
+        and stamp >= window_start
+    ]
+    return sorted(api_events + provider_events, key=lambda event:
+                  parsed_timestamp(event) or dt.datetime.max.replace(tzinfo=dt.timezone.utc))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("scenario", choices=sorted(SCENARIOS))
@@ -60,10 +100,10 @@ def main() -> None:
     args = parser.parse_args()
 
     logs = subprocess.run(
-        ["docker", "compose", "logs", "--no-color", "--tail=500", "api"],
+        ["docker", "compose", "logs", "--no-color", "--tail=500", "api", "mock-provider"],
         capture_output=True, check=True, text=True,
     ).stdout
-    events = parse_safe_events(logs)
+    events = select_current_events(parse_safe_events(logs))
     if not events:
         raise SystemExit("No structured events captured; refusing empty fixture")
     # Only controlled counters and histograms; metrics endpoint has no credentials.
@@ -74,7 +114,7 @@ def main() -> None:
         raise SystemExit("No metric samples captured")
     data = {
         "schema_version": 1,
-        "scenario_id": args.scenario,
+        # The scenario filename is for offline scoring; never put fault labels in the evidence payload.
         "source": "local-compose",
         "captured_at": dt.datetime.now(dt.timezone.utc).isoformat(),
         "events": events,

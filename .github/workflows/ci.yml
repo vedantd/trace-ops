@@ -52,7 +52,7 @@ jobs:
       - run: docker compose config --quiet
 
   fault-injection:
-    name: Five incidents, metrics and recovery
+    name: Seven incidents, provider retries and recovery
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
@@ -61,14 +61,26 @@ jobs:
         run: docker compose up --build -d
       - name: Run integration scenarios
         run: bash scripts/integration.sh
-      - name: Validate evidence exporter
+      - name: Validate evidence exporter and replay helpers
         run: python3 -m unittest discover -s scripts -p 'test_*.py'
+      - name: Run CP1.8 timed replay with persistent API
+        run: make replay-check
+      - name: Validate time windows and agent/evaluator separation
+        run: python3 scripts/validate_replay.py
       - name: Upload sanitized runtime evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cp1-5-evidence-fixtures
+          name: cp1-75-evidence-fixtures
           path: artifacts/evidence/*.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Upload CP1.8 replay agent-visible evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cp1-8-timeline-evidence
+          path: artifacts/evidence/replay-*.json
           if-no-files-found: ignore
           retention-days: 7
       - name: Collect logs on failure

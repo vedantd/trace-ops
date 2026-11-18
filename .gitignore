@@ -11,3 +11,4 @@ coverage/
 *.log
 
 artifacts/
+examples/mock-provider/runtime/*

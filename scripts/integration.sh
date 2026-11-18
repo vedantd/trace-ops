@@ -29,6 +29,7 @@ echo '== Baseline =='
 wait_status 200 /health/live
 wait_status 200 /health/ready
 wait_status 200 /orders/1
+wait_status 200 /orders/1/verify
 wait_status 200 /metrics
 curl -fsS "$BASE_URL/metrics" | grep -q 'traceops_db_pool_connections'
 # Validate correlation on a regular GET request.
@@ -95,4 +96,21 @@ capture cp15-db-pool-exhaustion
 recover
 wait_status 200 /orders/1
 
-echo 'PASS all five incident scenarios, request correlation, metrics and recovery'
+echo '== Provider transient degradation, retry masks user-facing failure =='
+make fault-provider-flaky
+wait_status 200 /health/ready
+python3 scripts/traffic.py --requests 12 --concurrency 3 --expect-status 200
+curl -fsS "$BASE_URL/metrics" | grep -q 'traceops_dependency_retries_total{dependency="mock-provider"}'
+capture cp175-provider-flaky
+recover
+wait_status 200 /orders/1/verify
+
+echo '== Provider sustained outage, bounded retry fails =='
+make fault-provider-outage
+wait_status 200 /health/ready
+python3 scripts/traffic.py --requests 8 --concurrency 2 --expect-status 502
+capture cp175-provider-outage
+recover
+wait_status 200 /orders/1/verify
+
+echo 'PASS all seven incident scenarios, dependency metrics and recovery'
