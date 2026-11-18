@@ -1,6 +1,7 @@
-.PHONY: up smoke integration logs traffic fault-db-down fault-slow fault-exception fault-upstream fault-pool fault-provider-flaky fault-provider-outage reset down clean test typecheck lint format-check check
+.PHONY: up smoke integration logs traffic replay replay-check fault-db-down fault-slow fault-exception fault-upstream fault-pool fault-provider-flaky fault-provider-outage reset down clean test typecheck lint format-check check
 
 up:
+	rm -f examples/mock-provider/runtime/fault.json
 	docker compose up --build -d
 
 smoke:
@@ -14,6 +15,12 @@ logs:
 
 traffic:
 	python3 scripts/traffic.py --requests 20 --concurrency 2
+
+replay:
+	python3 scripts/incident_runner.py
+
+replay-check:
+	python3 scripts/incident_runner.py --phase-seconds 3 --rps 5 --assert-transitions
 
 fault-db-down:
 	docker compose stop postgres
@@ -37,6 +44,7 @@ fault-provider-outage:
 	FAULT_MODE=provider_outage docker compose up -d --no-deps --force-recreate api
 
 reset:
+	rm -f examples/mock-provider/runtime/fault.json
 	docker compose up -d --wait postgres mock-provider
 	FAULT_MODE=none docker compose up -d --no-deps --force-recreate api
 
