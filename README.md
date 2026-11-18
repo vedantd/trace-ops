@@ -2,7 +2,7 @@
 
 **Evidence-driven incident investigation and root-cause analysis.**
 
-> **Status:** CP0 scaffold / CP1 incident testbed. GitHub CI (including all three fault-injection scenarios) and CodeQL passed on commit c55cb20. A clean local-machine verification is still outstanding. No AI agent, cloud integrations, or automatic remediation yet.
+> **Status:** CP1.5 merged. GitHub CI and CodeQL pass for five incident scenarios, including recovery and evidence capture. A clean local-machine verification remains outstanding. No AI agent, cloud integrations, or automatic remediation yet.
 
 TraceOps is an independent open-source Applied AI engineering project. The goal is to build an incident investigator that collects authorized evidence from logs, metrics, traces and code changes, tests competing root-cause hypotheses, and produces verifiable, cited diagnoses. It must abstain when evidence is insufficient.
 
@@ -59,6 +59,7 @@ make reset
 |---|---|
 | CP0 | Repository and repeatable test environment |
 | CP1 | Reproducible incidents and ground-truth records |
+| CP1.5 | Request correlation, structured telemetry and harder incidents |
 | CP2 | Read-only typed evidence tools |
 | CP3 | Baseline LLM diagnosis |
 | CP4 | Bounded tool-calling agent |
@@ -73,7 +74,7 @@ This repository starts only with CP0/CP1. Later layers are intentionally not pre
 
 ## Current validation limits
 
-The starter was prepared without Docker or npm registry connectivity, so it has **not been independently run locally**. GitHub Actions subsequently passed typecheck, lint, tests, build, Compose, and fault-injection integration checks on commit c55cb20. The npm lockfile has been committed; GitHub CI and Docker now use reproducible `npm ci`.
+The starter was prepared without Docker or npm registry connectivity, so it has **not been independently run locally**. GitHub Actions subsequently passed typecheck, lint, tests, build, Compose, and five-scenario fault-injection checks on CP1.5 PR #8. The npm lockfile has been committed; GitHub CI and Docker now use reproducible `npm ci`.
 
 ## Project materials
 

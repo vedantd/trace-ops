@@ -2,13 +2,13 @@
 
 **Last update:** 2026-11-18
 
-The starter code is committed to GitHub. Initial CI checks (including three Docker faults) passed on commit c55cb208. CP1.5 now adds two harder scenarios and reproducible npm ci installs; full CP1.5 CI results are pending. Local clean-room validation is still outstanding; do not claim that has passed.
+The starter code is committed to GitHub. Initial CI passed on c55cb208. CP1.5 CI and CodeQL passed on feature commit a7e642f6 and the change was squash-merged through PR #8. Clean local-machine validation remains outstanding. Local clean-room validation is still outstanding; do not claim that has passed.
 
 | CP | Checkpoint | State |
 |---|---|---|
 | 0 | Repository, local run and smoke validation | GitHub CI passed; clean local verification pending |
 | 1 | Three reproducible incidents and ground truth | GitHub integration suite passed; local verification pending |
-| 1.5 | Structured JSON logs, metrics, correlation, 2 harder faults | In development; CI validation pending |
+| 1.5 | Structured JSON logs, metrics, correlation, 2 harder faults | Implemented; CI and CodeQL passed; local clean-run pending |
 | 2 | Typed, bounded evidence tools | Not started |
 | 3 | Model-only diagnostic baseline | Not started |
 | 4 | Tool-calling investigator loop | Not started |
@@ -26,11 +26,13 @@ The starter code is committed to GitHub. Initial CI checks (including three Dock
 - [x] Remote CI unit test suite
 - [x] Remote CI build
 - [x] Remote CI Compose validation
-- [x] Remote CI fault injection suite
+- [x] Remote CI five-scenario fault injection and recovery suite
+- [x] Remote CI sanitized evidence export (5 artifacts)
+- [x] Remote CodeQL (CP1.5)
 - [x] Generate and commit package-lock.json for reproducible npm ci (CP1.5)
 - [ ] Local smoke test on a clean environment
 
-Do not claim end-to-end validation until these checks are observed passing.
+**CP1.5 result:** a7e642f6 passed remote CI and CodeQL. The five scenarios returned the expected statuses; pool pressure yielded 2 successes and 6 HTTP 503 responses; five sanitized evidence fixtures were generated. Remaining: fresh local checkout and smoke/integration verification (issue #5).
 
 ## Decision log
 
