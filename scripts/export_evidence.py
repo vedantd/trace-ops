@@ -61,11 +61,23 @@ def parse_safe_events(raw: str) -> list[dict]:
 
 
 
+def parsed_timestamp(event: dict) -> dt.datetime | None:
+    """Normalize ISO timestamps before comparing provider and API events."""
+    raw = event.get("timestamp")
+    if not isinstance(raw, str):
+        return None
+    try:
+        stamp = dt.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        return stamp if stamp.tzinfo is not None else None
+    except ValueError:
+        return None
+
+
 def select_current_events(all_events: list[dict]) -> list[dict]:
     """Exclude stale provider events, even when request IDs were reused."""
     api_events = [event for event in all_events if event.get("service") == "orders-api"]
-    api_timestamps = [event["timestamp"] for event in api_events
-                      if isinstance(event.get("timestamp"), str)]
+    api_timestamps = [stamp for event in api_events
+                      if (stamp := parsed_timestamp(event)) is not None]
     if not api_timestamps:
         return api_events
     window_start = min(api_timestamps)
@@ -74,10 +86,11 @@ def select_current_events(all_events: list[dict]) -> list[dict]:
         event for event in all_events
         if event.get("service") == "mock-provider"
         and event.get("request_id") in current_ids
-        and isinstance(event.get("timestamp"), str)
-        and event["timestamp"] >= window_start
+        and (stamp := parsed_timestamp(event)) is not None
+        and stamp >= window_start
     ]
-    return sorted(api_events + provider_events, key=lambda event: event.get("timestamp", ""))
+    return sorted(api_events + provider_events, key=lambda event:
+                  parsed_timestamp(event) or dt.datetime.max.replace(tzinfo=dt.timezone.utc))
 
 
 def main() -> None:
