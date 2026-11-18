@@ -2,7 +2,7 @@
 
 **Last update:** 2026-11-18
 
-The starter code is committed to GitHub. CI checks (including Docker fault injection) were observed passing on commit c55cb208. Local clean-room validation is still outstanding; do not claim that has passed.
+The starter code is committed to GitHub. Initial CI checks (including three Docker faults) passed on commit c55cb208. CP1.5 now adds two harder scenarios and reproducible npm ci installs; full CP1.5 CI results are pending. Local clean-room validation is still outstanding; do not claim that has passed.
 
 | CP | Checkpoint | State |
 |---|---|---|
@@ -27,7 +27,7 @@ The starter code is committed to GitHub. CI checks (including Docker fault injec
 - [x] Remote CI build
 - [x] Remote CI Compose validation
 - [x] Remote CI fault injection suite
-- [ ] Generate and commit package-lock.json for reproducible npm ci (CP1.5)
+- [x] Generate and commit package-lock.json for reproducible npm ci (CP1.5)
 - [ ] Local smoke test on a clean environment
 
 Do not claim end-to-end validation until these checks are observed passing.

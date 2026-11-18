@@ -73,7 +73,7 @@ This repository starts only with CP0/CP1. Later layers are intentionally not pre
 
 ## Current validation limits
 
-The starter was prepared without Docker or npm registry connectivity, so it has **not been independently run locally**. GitHub Actions subsequently passed typecheck, lint, tests, build, Compose, and fault-injection integration checks on commit c55cb20. Commit a dependency lockfile and switch to reproducible `npm ci` as the next toolchain-hardening step (tracked in issue #6).
+The starter was prepared without Docker or npm registry connectivity, so it has **not been independently run locally**. GitHub Actions subsequently passed typecheck, lint, tests, build, Compose, and fault-injection integration checks on commit c55cb20. The npm lockfile has been committed; GitHub CI and Docker now use reproducible `npm ci`.
 
 ## Project materials
 
