@@ -99,6 +99,22 @@
         "Outbound failure counters and final upstream_request_failed"
       ],
       "recovery": "make reset"
+    },
+    {
+      "id": "cp18-progressive-provider-degradation",
+      "environment": "local-compose",
+      "fault_injection": "make replay",
+      "symptom": "Verification transitions from low latency to higher latency, retry-masked dependency errors, client-facing 502 failures, and recovery",
+      "root_cause": "One local mock provider intentionally changes across five time windows without restarting the API. A simulated deployment marker is correlated but not causal.",
+      "component": "mock-provider HTTP dependency",
+      "expected_evidence": [
+        "Client HTTP 200 persists while the provider becomes slower and first-attempt 503 retries are masked",
+        "Attempt-level 503s and retries increase before user-facing 502s",
+        "During provider outage, dependency 503s and client 502s correlate through request IDs",
+        "Following recovery, response statuses and latency return to baseline patterns",
+        "A deployment marker exists but does not explain the provider-side response failures"
+      ],
+      "recovery": "Timed replay restores healthy mode automatically; make reset to clean all local state"
     }
   ]
 }

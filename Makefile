@@ -53,6 +53,7 @@ down:
 
 clean:
 	docker compose down -v
+	rm -f examples/mock-provider/runtime/fault.json
 
 test:
 	cd examples/nestjs-monolith && npm test

@@ -11,4 +11,4 @@ coverage/
 *.log
 
 artifacts/
-examples/mock-provider/runtime/*.json
+examples/mock-provider/runtime/*
