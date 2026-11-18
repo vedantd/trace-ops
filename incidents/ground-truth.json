@@ -43,6 +43,34 @@
         "Application exception in backend logs"
       ],
       "recovery": "make reset"
+    },
+    {
+      "id": "cp15-upstream-timeout",
+      "environment": "local-compose",
+      "fault_injection": "make fault-upstream",
+      "symptom": "GET /orders/1 returns 504 while PostgreSQL is healthy",
+      "root_cause": "Orders API aborts a real HTTP call to local mock provider after 350ms; provider responds after 2000ms",
+      "component": "mock-provider integration",
+      "expected_evidence": [
+        "Readiness remains 200",
+        "upstream_request_failed event with UPSTREAM_TIMEOUT",
+        "504 HTTP response"
+      ],
+      "recovery": "make reset"
+    },
+    {
+      "id": "cp15-db-pool-exhaustion",
+      "environment": "local-compose",
+      "fault_injection": "make fault-pool",
+      "symptom": "Concurrent GET /orders/1 requests experience latency and some 503s",
+      "root_cause": "Pool size 2, 400ms acquisition timeout, 1800ms simulated blocking queries under concurrency",
+      "component": "orders-api database pool",
+      "expected_evidence": [
+        "503 under concurrent load but database remains alive",
+        "database_query_failed PG_POOL_ACQUIRE_TIMEOUT events",
+        "Pool occupancy/queue metrics available on /metrics"
+      ],
+      "recovery": "make reset"
     }
   ]
 }

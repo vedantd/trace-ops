@@ -1,4 +1,4 @@
-.PHONY: up smoke integration logs fault-db-down fault-slow fault-exception reset down clean test typecheck lint format-check check
+.PHONY: up smoke integration logs fault-db-down fault-slow fault-exception fault-upstream fault-pool reset down clean test typecheck lint format-check check
 
 up:
 	docker compose up --build -d
@@ -21,8 +21,14 @@ fault-slow:
 fault-exception:
 	FAULT_MODE=application_exception docker compose up -d --no-deps --force-recreate api
 
+fault-upstream:
+	FAULT_MODE=upstream_timeout docker compose up -d --no-deps --force-recreate api
+
+fault-pool:
+	FAULT_MODE=db_pool_exhaustion docker compose up -d --no-deps --force-recreate api
+
 reset:
-	docker compose up -d --wait postgres
+	docker compose up -d --wait postgres mock-provider
 	FAULT_MODE=none docker compose up -d --no-deps --force-recreate api
 
 down:
