@@ -43,6 +43,13 @@ make reset
 `/metrics` and `make logs` to inspect the evidence. `make integration` exercises all
 seven deterministic scenarios and exports sanitized JSON under `artifacts/evidence/`.
 
+Use `make replay` for a **continuous timeline** (healthy → slow → retry masking →
+provider outage → recovery) without restarting the API. It writes
+`artifacts/evidence/replay-*.json` for the future agent and
+`artifacts/private-ground-truth/replay-*.json` for offline evaluation. The latter
+must never enter the agent context or be uploaded as a public CI artifact.
+See [CP1.8](../docs/CP1_8.md) for replay details.
+
 The traffic generator is dependency-free, capped at 200 requests/10 workers, and
 only accepts loopback HTTP destinations. Do not point fault scripts at real services.
 

@@ -9,6 +9,12 @@ There are no real customers, credentials, or external requests.
 - `GET /verify?mode=always_503` consistently returns 503.
 - `GET /verify?delay_ms=2000` preserves the earlier upstream-timeout scenario.
 
+For CP1.8, a read-only directory mount at `/app/runtime` supplies an atomic local
+`fault.json` file. The provider reads it for each verification request so behavior
+changes **without restarting the API**. The host replay script alone writes it,
+and it is deleted after a replay. There is no HTTP fault-control endpoint.
+The `slow` replay mode adds approximately 180 ms, below the API timeout.
+
 The provider emits sanitized JSON events with operation, attempt number, status,
 duration and validated forwarded request ID. The API also logs its dependency
 attempts and retries, so a future investigator can correlate the two services.

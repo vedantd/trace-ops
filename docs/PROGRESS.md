@@ -9,7 +9,8 @@ The starter code is committed to GitHub. Initial CI passed on c55cb208. CP1.5 CI
 | 0 | Repository, local run and smoke validation | GitHub CI passed; clean local verification pending |
 | 1 | Three reproducible incidents and ground truth | GitHub integration suite passed; local verification pending |
 | 1.5 | Structured JSON logs, metrics, correlation, 2 harder faults | Implemented; CI and CodeQL passed; local clean-run pending |
-| 1.75 | DB-to-provider verification, bounded retries, retry/outage incident fixtures | Implemented on feature branch; CI and clean local validation pending |
+| 1.75 | DB-to-provider verification, bounded retries, retry/outage incident fixtures | Implemented on feature branch; GitHub CI passed; clean local validation pending |
+| 1.8 | Time-varying replay, continuous traffic, timestamped evidence and separate labels | Implemented on feature branch; replay CI verification pending |
 | 2 | Typed, bounded evidence tools | Not started |
 | 3 | Model-only diagnostic baseline | Not started |
 | 4 | Tool-calling investigator loop | Not started |
