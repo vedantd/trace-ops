@@ -2,7 +2,7 @@
 
 **Evidence-driven incident investigation and root-cause analysis.**
 
-> **Status:** CP0 starter / CP1 testbed. No AI agent, cloud integrations, or automatic remediation yet. The initial checks need to run in GitHub Actions before we mark this checkpoint validated.
+> **Status:** CP0 scaffold / CP1 incident testbed. GitHub CI (including all three fault-injection scenarios) and CodeQL passed on commit c55cb20. A clean local-machine verification is still outstanding. No AI agent, cloud integrations, or automatic remediation yet.
 
 TraceOps is an independent open-source Applied AI engineering project. The goal is to build an incident investigator that collects authorized evidence from logs, metrics, traces and code changes, tests competing root-cause hypotheses, and produces verifiable, cited diagnoses. It must abstain when evidence is insufficient.
 
@@ -67,7 +67,7 @@ This repository starts only with CP0/CP1. Later layers are intentionally not pre
 
 ## Current validation limits
 
-The starter was prepared without Docker or npm registry connectivity, so the build and end-to-end tests have **not yet been observed passing**. GitHub Actions will provide the first remote check. Dependency lockfile generation and reproducible `npm ci` should be added immediately after initial dependencies install successfully.
+The starter was prepared without Docker or npm registry connectivity, so it has **not been independently run locally**. GitHub Actions subsequently passed typecheck, lint, tests, build, Compose, and fault-injection integration checks on commit c55cb20. Commit a dependency lockfile and switch to reproducible `npm ci` as the next toolchain-hardening step (tracked in issue #6).
 
 ## Project materials
 
