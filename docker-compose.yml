@@ -1,0 +1,37 @@
+name: trace-ops
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: traceops
+      POSTGRES_USER: traceops
+      POSTGRES_PASSWORD: traceops_local_only
+    volumes:
+      - traceops_pgdata:/var/lib/postgresql/data
+      - ./examples/nestjs-monolith/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - '127.0.0.1:5433:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U traceops -d traceops']
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
+  api:
+    build:
+      context: ./examples/nestjs-monolith
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://traceops:traceops_local_only@postgres:5432/traceops
+      FAULT_MODE: ${FAULT_MODE:-none}
+    ports:
+      - '127.0.0.1:3000:3000'
+    restart: 'no'
+
+volumes:
+  traceops_pgdata:

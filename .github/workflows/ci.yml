@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-checks:
+    name: Typecheck, lint, unit tests & build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/nestjs-monolith
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      # Initial scaffold has no generated lockfile yet; change this to npm ci once committed.
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Unit tests with coverage
+        run: npm run test:ci
+      - name: Build
+        run: npm run build
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nestjs-coverage
+          path: examples/nestjs-monolith/coverage/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  compose-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config --quiet
+
+  fault-injection:
+    name: Three incidents and recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start disposable testbed
+        run: docker compose up --build -d
+      - name: Run integration scenarios
+        run: bash scripts/integration.sh
+      - name: Collect logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=150
+      - name: Stop and remove test data
+        if: always()
+        run: docker compose down -v

@@ -1,0 +1,47 @@
+.PHONY: up smoke integration logs fault-db-down fault-slow fault-exception reset down clean test typecheck lint format-check check
+
+up:
+	docker compose up --build -d
+
+smoke:
+	bash scripts/smoke.sh
+
+integration:
+	bash scripts/integration.sh
+
+logs:
+	docker compose logs -f api
+
+fault-db-down:
+	docker compose stop postgres
+
+fault-slow:
+	FAULT_MODE=slow_query docker compose up -d --no-deps --force-recreate api
+
+fault-exception:
+	FAULT_MODE=application_exception docker compose up -d --no-deps --force-recreate api
+
+reset:
+	docker compose up -d --wait postgres
+	FAULT_MODE=none docker compose up -d --no-deps --force-recreate api
+
+down:
+	docker compose down
+
+clean:
+	docker compose down -v
+
+test:
+	cd examples/nestjs-monolith && npm test
+
+typecheck:
+	cd examples/nestjs-monolith && npm run typecheck
+
+lint:
+	cd examples/nestjs-monolith && npm run lint
+
+format-check:
+	cd examples/nestjs-monolith && npm run format:check
+
+check:
+	cd examples/nestjs-monolith && npm run typecheck && npm run lint && npm test && npm run build
