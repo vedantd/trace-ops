@@ -31,8 +31,7 @@ wait_status 200 /health/ready
 wait_status 200 /orders/1
 wait_status 200 /metrics
 curl -fsS "$BASE_URL/metrics" | grep -q 'traceops_db_pool_connections'
-request_id="$(curl -sSI -H 'X-Request-ID: cp15-verification' "$BASE_URL/health/live" | tr -d '\r' | grep -i '^x-request-id:' || true)"
-# HEAD may not be enabled: verify correlation on a regular GET request below.
+# Validate correlation on a regular GET request.
 header_id="$(curl -sS -D - -o /dev/null -H 'X-Request-ID: cp15-verification' "$BASE_URL/orders/1" | tr -d '\r' | grep -i '^x-request-id:' || true)"
 [[ "$header_id" == *"cp15-verification"* ]] || { echo 'Missing request correlation ID' >&2; exit 1; }
 
