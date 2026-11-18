@@ -168,10 +168,16 @@ def replay(origin: str, phase_seconds: int, rps: int, assert_transitions: bool) 
     futures: list[tuple[int, concurrent.futures.Future]] = []
     origin = validate_local_url(origin)
 
-    # Fail early before changing the local provider's behavior.
-    health, _ = fetch_response(urllib.request.Request(origin + "/health/ready"), timeout=3)
-    if health != 200:
-        raise RuntimeError("Start the healthy local testbed first: make up && make reset")
+    # Prior integration tests recreate the API. Wait for startup to finish
+    # before replay begins; never restart the API during a replay window.
+    readiness_deadline = time.monotonic() + 30
+    while True:
+        health, _ = fetch_response(urllib.request.Request(origin + "/health/ready"), timeout=2)
+        if health == 200:
+            break
+        if time.monotonic() >= readiness_deadline:
+            raise RuntimeError("Local API never became ready; run make up && make reset")
+        time.sleep(0.25)
 
     began = time.monotonic()
     current_phase = -1
