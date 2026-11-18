@@ -32,6 +32,10 @@ class EvidenceExportTests(unittest.TestCase):
         events = [
             {"service": "mock-provider", "timestamp": "2026-01-01T00:00:00Z",
              "request_id": "reused", "event": "provider_request_completed"},
+            {"service": "orders-api", "timestamp": "2026-01-01T00:00:59Z",
+             "request_id": None, "event": "service_started"},
+            {"service": "mock-provider", "timestamp": "2026-01-01T00:00:59.500Z",
+             "request_id": "reused", "event": "provider_request_completed"},
             {"service": "orders-api", "timestamp": "2026-01-01T00:01:00Z",
              "request_id": "reused", "event": "request_completed"},
             {"service": "mock-provider", "timestamp": "2026-01-01T00:01:01Z",
@@ -40,9 +44,10 @@ class EvidenceExportTests(unittest.TestCase):
              "request_id": "unmatched", "event": "provider_request_completed"},
         ]
         selected = select_current_events(events)
-        self.assertEqual(len(selected), 2)
-        self.assertEqual(selected[0]["service"], "orders-api")
-        self.assertEqual(selected[1]["timestamp"], "2026-01-01T00:01:01Z")
+        self.assertEqual(len(selected), 4)
+        self.assertEqual(selected[0]["event"], "service_started")
+        self.assertEqual(selected[1]["timestamp"], "2026-01-01T00:00:59.500Z")
+        self.assertEqual(selected[-1]["timestamp"], "2026-01-01T00:01:01Z")
 
 
 if __name__ == "__main__":

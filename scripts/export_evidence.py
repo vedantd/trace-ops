@@ -10,6 +10,7 @@ import subprocess
 import urllib.request
 
 ALLOW_EVENTS = {
+    "service_started",
     "request_completed",
     "database_query_failed",
     "postgres_pool_error",
