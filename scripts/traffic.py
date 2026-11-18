@@ -9,6 +9,7 @@ import json
 import math
 import statistics
 import time
+import uuid
 import urllib.error
 import urllib.request
 from urllib.parse import urlsplit
@@ -33,11 +34,14 @@ def main() -> None:
     if not 1 <= args.requests <= 200 or not 1 <= args.concurrency <= 10:
         parser.error("Allowed ranges: 1-200 requests and 1-10 concurrent workers")
 
+    # Unique run prefix prevents correlation collisions between fault windows.
+    run_id = uuid.uuid4().hex[:16]
+
     def send(index: int) -> tuple[int, float]:
         start = time.perf_counter()
         request = urllib.request.Request(
             args.base_url.rstrip("/") + "/orders/1/verify",
-            headers={"X-Request-ID": "traffic-" + str(index)},
+            headers={"X-Request-ID": "traffic-" + run_id + "-" + str(index)},
         )
         try:
             with urllib.request.urlopen(request, timeout=6) as response:

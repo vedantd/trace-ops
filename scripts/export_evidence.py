@@ -59,6 +59,26 @@ def parse_safe_events(raw: str) -> list[dict]:
     return observations
 
 
+
+def select_current_events(all_events: list[dict]) -> list[dict]:
+    """Exclude stale provider events, even when request IDs were reused."""
+    api_events = [event for event in all_events if event.get("service") == "orders-api"]
+    api_timestamps = [event["timestamp"] for event in api_events
+                      if isinstance(event.get("timestamp"), str)]
+    if not api_timestamps:
+        return api_events
+    window_start = min(api_timestamps)
+    current_ids = {event.get("request_id") for event in api_events if event.get("request_id")}
+    provider_events = [
+        event for event in all_events
+        if event.get("service") == "mock-provider"
+        and event.get("request_id") in current_ids
+        and isinstance(event.get("timestamp"), str)
+        and event["timestamp"] >= window_start
+    ]
+    return sorted(api_events + provider_events, key=lambda event: event.get("timestamp", ""))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("scenario", choices=sorted(SCENARIOS))
@@ -69,13 +89,7 @@ def main() -> None:
         ["docker", "compose", "logs", "--no-color", "--tail=500", "api", "mock-provider"],
         capture_output=True, check=True, text=True,
     ).stdout
-    all_events = parse_safe_events(logs)
-    api_events = [event for event in all_events if event.get("service") == "orders-api"]
-    current_ids = {event.get("request_id") for event in api_events if event.get("request_id")}
-    # Provider is not restarted between faults; include only events correlated to this API process.
-    provider_events = [event for event in all_events if event.get("service") == "mock-provider"
-                       and event.get("request_id") in current_ids]
-    events = sorted(api_events + provider_events, key=lambda event: event.get("timestamp", ""))
+    events = select_current_events(parse_safe_events(logs))
     if not events:
         raise SystemExit("No structured events captured; refusing empty fixture")
     # Only controlled counters and histograms; metrics endpoint has no credentials.
