@@ -75,6 +75,7 @@ The starter was prepared without Docker or npm registry connectivity, so the bui
 - [CP0–CP1 checklist](docs/CP0_CP1.md)
 - [Progress](docs/PROGRESS.md)
 - [Engineering roadmap](docs/ROADMAP.md)
+- [Full engineering blueprint](docs/ENGINEERING_BLUEPRINT.md)
 - [Security guidance](SECURITY.md)
 
 ## License
