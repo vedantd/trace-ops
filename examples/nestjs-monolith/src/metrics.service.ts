@@ -18,6 +18,27 @@ const BOUNDS = [0.025, 0.1, 0.5, 1, 2, 3, 5, 10];
 @Injectable()
 export class MetricsService {
   private readonly requests = new Map<string, RequestMeasurements>();
+  private readonly dependencyAttempts = new Map<string, RequestMeasurements>();
+  private dependencyRetries = 0;
+
+  observeDependencyAttempt(success: boolean, durationMs: number): void {
+    const outcome = success ? 'success' : 'failure';
+    let item = this.dependencyAttempts.get(outcome);
+    if (!item) {
+      item = { count: 0, seconds: 0, cumulativeBuckets: BOUNDS.map(() => 0) };
+      this.dependencyAttempts.set(outcome, item);
+    }
+    item.count++;
+    const seconds = durationMs / 1000;
+    item.seconds += seconds;
+    for (let i = 0; i < BOUNDS.length; i++) {
+      if (seconds <= BOUNDS[i]) item.cumulativeBuckets[i]++;
+    }
+  }
+
+  observeDependencyRetry(): void {
+    this.dependencyRetries++;
+  }
 
   observe(route: string, status: number, durationMs: number): void {
     // Both label values are from controlled sets, preventing cardinality explosion.
@@ -66,6 +87,41 @@ export class MetricsService {
         `traceops_http_request_duration_seconds_count{${labels}} ${item.count}`,
       );
     }
+    lines.push(
+      '# HELP traceops_dependency_attempts_total Outbound provider attempts by result.',
+      '# TYPE traceops_dependency_attempts_total counter',
+    );
+    for (const outcome of ['success', 'failure']) {
+      const item = this.dependencyAttempts.get(outcome);
+      lines.push(
+        'traceops_dependency_attempts_total{dependency="mock-provider",outcome="' +
+          outcome + '"} ' + (item?.count ?? 0),
+      );
+    }
+    lines.push(
+      '# HELP traceops_dependency_duration_seconds Outbound provider attempt duration.',
+      '# TYPE traceops_dependency_duration_seconds histogram',
+    );
+    for (const outcome of ['success', 'failure']) {
+      const item = this.dependencyAttempts.get(outcome);
+      const labels = 'dependency="mock-provider",outcome="' + outcome + '"';
+      BOUNDS.forEach((bound, index) => {
+        lines.push(
+          'traceops_dependency_duration_seconds_bucket{' + labels + ',le="' + bound + '"} ' +
+            (item?.cumulativeBuckets[index] ?? 0),
+        );
+      });
+      lines.push(
+        'traceops_dependency_duration_seconds_bucket{' + labels + ',le="+Inf"} ' + (item?.count ?? 0),
+        'traceops_dependency_duration_seconds_sum{' + labels + '} ' + (item?.seconds ?? 0).toFixed(6),
+        'traceops_dependency_duration_seconds_count{' + labels + '} ' + (item?.count ?? 0),
+      );
+    }
+    lines.push(
+      '# HELP traceops_dependency_retries_total Outbound provider attempts retried.',
+      '# TYPE traceops_dependency_retries_total counter',
+      'traceops_dependency_retries_total{dependency="mock-provider"} ' + this.dependencyRetries,
+    );
     lines.push(
       '# HELP traceops_db_pool_connections PostgreSQL pool connection counts.',
       '# TYPE traceops_db_pool_connections gauge',

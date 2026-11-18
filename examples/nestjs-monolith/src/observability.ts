@@ -16,8 +16,13 @@ export function validatedRequestId(value: string | string[] | undefined): string
   return randomUUID();
 }
 
+export function currentRequestId(): string | null {
+  return requestScope.getStore()?.requestId ?? null;
+}
+
 export function routeTemplate(rawUrl: string | undefined): string {
   const path = (rawUrl ?? '/').split('?')[0];
+  if (/^\/orders\/\d+\/verify$/.test(path)) return '/orders/:id/verify';
   if (/^\/orders\/\d+$/.test(path)) return '/orders/:id';
   if (path === '/health/live' || path === '/health/ready' || path === '/metrics') return path;
   return '/unmatched'; // Do not log arbitrary paths, query strings or identifiers.
