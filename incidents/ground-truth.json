@@ -1,0 +1,48 @@
+{
+  "schema_version": "0.1",
+  "purpose": "Hidden ground-truth labels for CP1 and future offline evals; never include these labels in model context.",
+  "incidents": [
+    {
+      "id": "cp1-db-unavailable",
+      "environment": "local-compose",
+      "fault_injection": "make fault-db-down",
+      "symptom": "GET /orders/1 returns 503 and /health/ready fails",
+      "root_cause": "PostgreSQL container intentionally stopped",
+      "component": "postgres",
+      "expected_evidence": [
+        "Database connection error in API logs",
+        "Database readiness returns 503",
+        "API liveness continues to return 200"
+      ],
+      "recovery": "make reset"
+    },
+    {
+      "id": "cp1-slow-query",
+      "environment": "local-compose",
+      "fault_injection": "make fault-slow",
+      "symptom": "GET /orders/1 returns 200 but request latency is elevated",
+      "root_cause": "Injected pg_sleep(2.5) in orders request path",
+      "component": "orders-api/database-query",
+      "expected_evidence": [
+        "Orders endpoint latency above baseline",
+        "Database readiness remains 200",
+        "Slow query evident in controlled source path"
+      ],
+      "recovery": "make reset"
+    },
+    {
+      "id": "cp1-app-exception",
+      "environment": "local-compose",
+      "fault_injection": "make fault-exception",
+      "symptom": "GET /orders/1 returns HTTP 500 while database is healthy",
+      "root_cause": "Injected application exception before querying PostgreSQL",
+      "component": "orders-api",
+      "expected_evidence": [
+        "HTTP 500",
+        "Readiness remains 200",
+        "Application exception in backend logs"
+      ],
+      "recovery": "make reset"
+    }
+  ]
+}
