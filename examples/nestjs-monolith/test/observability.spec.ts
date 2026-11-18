@@ -3,6 +3,7 @@ import { routeTemplate, validatedRequestId } from '../src/observability';
 describe('request observability', () => {
   it('normalizes dynamic paths and strips query data', () => {
     expect(routeTemplate('/orders/123?token=never-log-this')).toBe('/orders/:id');
+    expect(routeTemplate('/orders/123/verify?token=never-log-this')).toBe('/orders/:id/verify');
     expect(routeTemplate('/unknown/sensitive-identifier')).toBe('/unmatched');
   });
 

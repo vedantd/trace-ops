@@ -52,7 +52,7 @@ jobs:
       - run: docker compose config --quiet
 
   fault-injection:
-    name: Five incidents, metrics and recovery
+    name: Seven incidents, provider retries and recovery
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
@@ -67,7 +67,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cp1-5-evidence-fixtures
+          name: cp1-75-evidence-fixtures
           path: artifacts/evidence/*.json
           if-no-files-found: ignore
           retention-days: 7

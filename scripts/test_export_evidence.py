@@ -17,6 +17,17 @@ class EvidenceExportTests(unittest.TestCase):
         self.assertNotIn("customer_email", records[0])
         self.assertEqual(records[0]["http_status"], 503)
 
+    def test_provider_event_is_sanitized(self):
+        raw = (
+            'mock-provider-1 | {"service":"mock-provider","event":"provider_request_completed",'
+            '"request_id":"abc","http_status":503,"operation":"verify","attempt":1,'
+            '"provider_token":"not-for-export"}\n'
+        )
+        records = parse_safe_events(raw)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["attempt"], 1)
+        self.assertNotIn("provider_token", records[0])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -15,10 +15,14 @@ ALLOW_EVENTS = {
     "postgres_pool_error",
     "upstream_request_failed",
     "application_exception",
+    "dependency_request_completed",
+    "upstream_retry_scheduled",
+    "provider_request_completed",
 }
 ALLOW_FIELDS = {
     "timestamp", "service", "level", "event", "request_id", "method",
     "route", "http_status", "duration_ms", "error_code", "dependency",
+    "operation", "attempt", "backoff_ms",
 }
 SCENARIOS = {
     "cp1-db-unavailable",
@@ -26,6 +30,8 @@ SCENARIOS = {
     "cp1-app-exception",
     "cp15-upstream-timeout",
     "cp15-db-pool-exhaustion",
+    "cp175-provider-flaky",
+    "cp175-provider-outage",
 }
 
 
@@ -41,7 +47,7 @@ def parse_safe_events(raw: str) -> list[dict]:
             continue
         if not isinstance(record, dict) or record.get("event") not in ALLOW_EVENTS:
             continue
-        if record.get("service") != "orders-api":
+        if record.get("service") not in {"orders-api", "mock-provider"}:
             continue
         observation = {
             key: value for key, value in record.items()
@@ -60,10 +66,16 @@ def main() -> None:
     args = parser.parse_args()
 
     logs = subprocess.run(
-        ["docker", "compose", "logs", "--no-color", "--tail=500", "api"],
+        ["docker", "compose", "logs", "--no-color", "--tail=500", "api", "mock-provider"],
         capture_output=True, check=True, text=True,
     ).stdout
-    events = parse_safe_events(logs)
+    all_events = parse_safe_events(logs)
+    api_events = [event for event in all_events if event.get("service") == "orders-api"]
+    current_ids = {event.get("request_id") for event in api_events if event.get("request_id")}
+    # Provider is not restarted between faults; include only events correlated to this API process.
+    provider_events = [event for event in all_events if event.get("service") == "mock-provider"
+                       and event.get("request_id") in current_ids]
+    events = sorted(api_events + provider_events, key=lambda event: event.get("timestamp", ""))
     if not events:
         raise SystemExit("No structured events captured; refusing empty fixture")
     # Only controlled counters and histograms; metrics endpoint has no credentials.
@@ -74,7 +86,7 @@ def main() -> None:
         raise SystemExit("No metric samples captured")
     data = {
         "schema_version": 1,
-        "scenario_id": args.scenario,
+        # The scenario filename is for offline scoring; never put fault labels in the evidence payload.
         "source": "local-compose",
         "captured_at": dt.datetime.now(dt.timezone.utc).isoformat(),
         "events": events,

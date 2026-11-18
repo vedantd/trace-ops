@@ -1,4 +1,4 @@
-.PHONY: up smoke integration logs fault-db-down fault-slow fault-exception fault-upstream fault-pool reset down clean test typecheck lint format-check check
+.PHONY: up smoke integration logs traffic fault-db-down fault-slow fault-exception fault-upstream fault-pool fault-provider-flaky fault-provider-outage reset down clean test typecheck lint format-check check
 
 up:
 	docker compose up --build -d
@@ -10,7 +10,10 @@ integration:
 	bash scripts/integration.sh
 
 logs:
-	docker compose logs -f api
+	docker compose logs -f api mock-provider
+
+traffic:
+	python3 scripts/traffic.py --requests 20 --concurrency 2
 
 fault-db-down:
 	docker compose stop postgres
@@ -26,6 +29,12 @@ fault-upstream:
 
 fault-pool:
 	FAULT_MODE=db_pool_exhaustion docker compose up -d --no-deps --force-recreate api
+
+fault-provider-flaky:
+	FAULT_MODE=provider_flaky docker compose up -d --no-deps --force-recreate api
+
+fault-provider-outage:
+	FAULT_MODE=provider_outage docker compose up -d --no-deps --force-recreate api
 
 reset:
 	docker compose up -d --wait postgres mock-provider
